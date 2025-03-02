@@ -1,7 +1,9 @@
 .env
+appsettings.json
+appsettings.Development.json
 bin/
 obj/
-packages/
+Migrations/
 
 
 dotnet restore
