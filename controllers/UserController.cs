@@ -22,16 +22,19 @@ namespace ProjectManagement.Controllers
         {
             try
             {
-                var result = _authService.RegisterUser(get);
-                return Ok(new
-                {
-                    message = "User registered successfully",
-                    data = result,
-                });
+                var data = _authService.RegisterUser(get);
+                return Ok(new ApiResponse
+                (201, "User registered successfully",
+                     data)
+                );
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new ApiResponse(709, ex.Message)); // lỗi email đã tồn tại
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message });
+                return StatusCode(500, new ApiResponse(500, ex.Message)); // lỗi server
             }
         }
 
@@ -40,10 +43,10 @@ namespace ProjectManagement.Controllers
         {
             try
             {
-                var result = _authService.LoginUser(get);
+                var data = _authService.LoginUser(get);
 
                 // Lưu token vào cookies
-                Response.Cookies.Append("AuthToken", result.Token, new CookieOptions
+                Response.Cookies.Append("AuthToken", data.Token, new CookieOptions
                 {
                     HttpOnly = true, // Ngăn chặn JavaScript truy cập, giúp chống XSS
                     Secure = true,   // Chỉ gửi cookie qua HTTPS
@@ -51,22 +54,22 @@ namespace ProjectManagement.Controllers
                     Expires = DateTime.UtcNow.AddMinutes(60) // Token hết hạn sau 60 phút
                 });
 
-                return Ok(new
-                {
-                    message = "Login successful",
-                    data = new
-                    {
-                        id = result.User.Id,
-                        fullname = result.User.FullName,
-                        email = result.User.Email,
-                        phone = result.User.Phone
-                    }
+                return Ok(new ApiResponse(200, "Login successful", data));
+                // {
+                //     message = "Login successful",
+                //     data = new
+                //     {
+                //         id = result.User.Id,
+                //         fullname = result.User.FullName,
+                //         email = result.User.Email,
+                //         phone = result.User.Phone
+                //     }
 
-                });
+                // });
             }
             catch (Exception ex)
             {
-                return Unauthorized(new { error = ex.Message });
+                return Unauthorized(new ApiResponse(401, ex.Message));
             }
         }
 

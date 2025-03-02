@@ -12,10 +12,11 @@ namespace ProjectManagement.services
             _context = context;
         }
 
+        // Lấy project theo id
         public Project GetProjectById(int id)
         {
             return _context.Projects.FirstOrDefault(p => p.Id == id)
-                   ?? throw new Exception("Project not found.");
+                   ?? throw new CustomException(new ApiResponse(802, "Project not found."));
         }
 
 
@@ -24,7 +25,7 @@ namespace ProjectManagement.services
         {
             if (userId <= 0)
             {
-                throw new Exception("Invalid user.");
+                throw new CustomException(new ApiResponse(601, "User not found."));
             }
 
             var newProject = new Project
@@ -45,7 +46,7 @@ namespace ProjectManagement.services
             var existingProject = _context.Projects.Find(id);
             if (existingProject == null)
             {
-                throw new Exception("Project not found.");
+                throw new CustomException(new ApiResponse(802, "Project not found."));
             }
 
             existingProject.NameProject = get.NameProject;
@@ -63,7 +64,7 @@ namespace ProjectManagement.services
             var project = _context.Projects.Find(id);
             if (project == null)
             {
-                throw new Exception("Project not found.");
+                throw new CustomException(new ApiResponse(802, "Project not found."));
             }
 
             _context.Projects.Remove(project);

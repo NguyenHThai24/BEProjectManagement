@@ -24,7 +24,7 @@ namespace ProjectManagement.Controllers
             var token = Request.Cookies["AuthToken"]; // Lấy token từ cookie
             if (string.IsNullOrEmpty(token))
             {
-                throw new Exception("Unauthorized: Token not found.");
+                throw new CustomException(new ApiResponse(803, "Unauthorized: Token not found."));
             }
 
             var handler = new JwtSecurityTokenHandler();
@@ -33,11 +33,11 @@ namespace ProjectManagement.Controllers
             // Lấy userId từ claim
             var userIdClaim = jsonToken?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
 
-            Console.WriteLine($"User ID from Token: {userIdClaim}");
+            // Console.WriteLine($"User ID from Token: {userIdClaim}");
 
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
             {
-                throw new Exception("Unauthorized: Invalid token.");
+                throw new CustomException(new ApiResponse(498, "Unauthorized: Invalid token"));
             }
 
             return userId; // Trả về userId dưới dạng int
@@ -61,13 +61,13 @@ namespace ProjectManagement.Controllers
             {
                 var userId = GetUserFromToken(); // Lấy id người thực hiện
                 var project = _projectService.AddProject(get, userId);
-                var responseData = new
+                var data = new
                 {
                     NameProject = project.NameProject,
                     DecriptionProject = project.DecriptionProject,
                     UserId = project.UserId
                 };
-                return Ok(new { message = "Project added successfully", data = responseData });
+                return Ok(new ApiResponse(201, "Project added successfully", data));
             }
 
 
@@ -84,13 +84,13 @@ namespace ProjectManagement.Controllers
             {
                 var userId = GetUserFromToken();
                 var project = _projectService.UpdateProject(id, get, userId);
-                var responseData = new
+                var data = new
                 {
                     NameProject = project.NameProject,
                     DecriptionProject = project.DecriptionProject,
                     UserId = project.UserId
                 };
-                return Ok(new { message = "Project updated successfully", data = responseData });
+                return Ok(new ApiResponse(200, "Project updated successfully", data));
             }
             catch (Exception ex)
             {
@@ -113,24 +113,24 @@ namespace ProjectManagement.Controllers
 
                 if (project == null)
                 {
-                    Console.WriteLine("Project not found!");
-                    return NotFound(new { error = "Project not found." });
+                    //Console.WriteLine("Project not found!");
+                    return NotFound(new ApiResponse(802, "Project not found."));
                 }
 
                 if (project.UserId != userId)
                 {
                     //Console.WriteLine("Permission denied!");
-                    return Forbid("You do not have permission to delete this project.");
+                    throw new CustomException(new ApiResponse(403, "You do not have permission to delete this project."));
                 }
 
                 _projectService.DeleteProject(id);
-                Console.WriteLine("Project deleted successfully.");
-                return Ok(new { message = "Project deleted successfully" });
+                // Console.WriteLine("Project deleted successfully.");
+                return Ok(new ApiResponse(200, "Project deleted successfully"));
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
-                return BadRequest(new { error = ex.Message });
+                //Console.WriteLine($"Error: {ex.Message}");
+                return BadRequest(new ApiResponse(400, ex.Message));
             }
         }
 

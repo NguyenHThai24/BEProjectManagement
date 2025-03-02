@@ -1,4 +1,4 @@
-using ProjectManagement.services;
+using ProjectManagement.Services;
 
 namespace ProjectManagement.Models
 {
@@ -8,10 +8,10 @@ namespace ProjectManagement.Models
         public string Message { get; set; }
         public object? Data { get; set; }
 
-        public ApiResponse(int errorCode, string message = "", object? data = null)
+        public ApiResponse(int errorCode, string? message = null, object? data = null)
         {
             Code = errorCode;
-            Message = string.IsNullOrEmpty(message) ? ErrorCodes.Messages.GetValueOrDefault(errorCode, "unknown_error") : message;
+            Message = message ?? ErrorCodes.Messages.GetValueOrDefault(errorCode, "unknown_error");
             Data = data;
         }
     }

@@ -52,13 +52,13 @@ namespace ProjectManagement.services
             {
                 if (_context.Users.Any(u => u.Email == get.Email))
                 {
-                    throw new ArgumentException("Email already exists.");
+                    throw new CustomException(new ApiResponse(804, "Email already exists."));
                 }
 
                 string passwordPattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,16}$";
                 if (!Regex.IsMatch(get.PasswordHash, passwordPattern))
                 {
-                    throw new ArgumentException("Invalid password format. Password must be 8-16 characters and include at least one uppercase letter, one lowercase letter, one number, and one special character.");
+                    throw new CustomException(new ApiResponse(600, "Invalid password format. Password must be 8-16 characters and include at least one uppercase letter, one lowercase letter, one number, and one special character."));
                 }
 
                 string hashedPassword = BCrypt.Net.BCrypt.HashPassword(get.PasswordHash);
@@ -82,29 +82,49 @@ namespace ProjectManagement.services
             }
         }
 
-        // Đăng nhập
-        //public string LoginUser(Get_User_Login get)
-        //{
-        //    var existingUser = _context.Users.SingleOrDefault(u => u.Email == get.Email);
-        //    if (existingUser == null || !BCrypt.Net.BCrypt.Verify(get.Password, existingUser.Password))
-        //    {
-        //        throw new Exception("Invalid email or password.");
-        //    }
 
-        //    return GenerateJwtToken(existingUser);
-        //}
         public (string Token, User User) LoginUser(Get_User_Login get)
         {
             var existingUser = _context.Users.SingleOrDefault(u => u.Email == get.Email);
 
             // Kiểm tra user tồn tại và mật khẩu đúng
-            if (existingUser == null || string.IsNullOrEmpty(get.PasswordHash) || !BCrypt.Net.BCrypt.Verify(get.PasswordHash, existingUser.PasswordHash))
+            if (existingUser == null)
             {
-                throw new Exception("Invalid email or password.");
+                throw new CustomException(new ApiResponse(801, "Email does not exits."));
+            }
+
+            if (string.IsNullOrEmpty(get.PasswordHash) || !BCrypt.Net.BCrypt.Verify(get.PasswordHash, existingUser.PasswordHash))
+            {
+                throw new CustomException(new ApiResponse(600, "Password incorrect"));
             }
 
             string token = GenerateJwtToken(existingUser);
             return (token, existingUser);
+        }
+    }
+
+
+    // constructor  ném mã lỗi
+    [Serializable]
+    internal class CustomException : Exception
+    {
+        private ApiResponse apiResponse;
+
+        public CustomException()
+        {
+        }
+
+        public CustomException(ApiResponse apiResponse)
+        {
+            this.apiResponse = apiResponse;
+        }
+
+        public CustomException(string? message) : base(message)
+        {
+        }
+
+        public CustomException(string? message, Exception? innerException) : base(message, innerException)
+        {
         }
     }
 }
